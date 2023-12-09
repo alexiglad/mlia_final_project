@@ -1,3 +1,5 @@
+NUM_PROC=$1
+
 singularity exec --env HF_HOME=$HF_HOME --env PYTHONPATH=/usr/local/lib/python3.8/site-packages/ --nv /scratch/ssb3vk/MLIA/mlia_fp.sif torchrun --nproc_per_node=$NUM_PROC train.py \
 /scratch/ssb3vk/MLIA/Classification_data/Testing \
 --model mixnet_s \
