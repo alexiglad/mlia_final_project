@@ -1,39 +1,63 @@
 import os
-import rawpy
-import PIL.Image
+import random
+import SimpleITK as sitk
+from PIL import Image
+import numpy as np
 
-def convert_raw_to_jpeg_with_metadata(raw_file_path, mhd_file_path, jpeg_file_path):
-    # # Read metadata from .mhd file
-    # itkimage = sitk.ReadImage(mhd_file_path)
-    # # metadata = sitk.GetMetaDataDictionary(itkimage)
+def mhd_raw_to_jpeg(mhd_file_path, jpeg_file_path, size=(112, 112)):
+    print(mhd_file_path)
+    # Check if corresponding .raw file exists
+    raw_file_path = os.path.splitext(mhd_file_path)[0] + '.raw'
+    if not os.path.exists(raw_file_path):
+        print(f"Skipping {mhd_file_path} as corresponding .raw file does not exist.")
+        return
 
-    # # Process this metadata as needed...
+    itkimage = sitk.ReadImage(mhd_file_path)
+    image_array = sitk.GetArrayFromImage(itkimage)
+    normalized_image = (image_array - np.min(image_array)) / (np.max(image_array) - np.min(image_array))
+    image_8bit = (normalized_image * 255).astype(np.uint8)
+    image = Image.fromarray(image_8bit)
+    image_resized = image.resize(size)
+    image_resized.save(jpeg_file_path, 'JPEG')
 
-    # # Read RAW file
-    # print(raw_file_path)
-    # with rawpy.imread(raw_file_path) as raw:
-    #     # Process RAW file (use metadata if necessary)
-    #     rgb = raw.postprocess()
+def process_directory(source_dir, dest_dir, split_ratio=0.1):
+    for root, dirs, files in os.walk(source_dir):
+        for name in files:
+            if name.endswith('.mhd'):
+                source_file = os.path.join(root, name)
+                relative_path = os.path.relpath(root, source_dir)
+                target_subdir = os.path.join(dest_dir, relative_path)
 
-    # # Convert to PIL Image and save as JPEG
-    # image = PIL.Image.fromarray(rgb)
-    # image.save(jpeg_file_path, 'JPEG')
+                if not os.path.exists(target_subdir):
+                    os.makedirs(target_subdir)
 
-    
-    im = PIL.Image.open(raw_file_path)
-    rgb_im = im.convert('RGB')
-    rgb_im.save(jpeg_file_path)
+                base_name = os.path.splitext(name)[0]
+                target_file = os.path.join(target_subdir, base_name + '.jpg')
+                mhd_raw_to_jpeg(source_file, target_file)
 
-# Directory containing your .raw and .mhd files
-directory = '/scratch/ssb3vk/MLIA/Classification_data/Training/Diseased'
+def split_data(source_dir, dest_dir, validation_dir, split_ratio):
+    for category in ['Diseased', 'Healthy']:
+        training_path = os.path.join(source_dir, 'Training', category)
+        validation_path = os.path.join(validation_dir, category)
+        if not os.path.exists(validation_path):
+            os.makedirs(validation_path)
 
-# Iterate over files in the directory
-for filename in os.listdir(directory):
-    if filename.endswith('.raw'):
-        base_name = os.path.splitext(filename)[0]
-        raw_file_path = os.path.join(directory, filename)
-        mhd_file_path = os.path.join(directory, base_name + '.mhd')
-        jpeg_file_path = os.path.join(directory, base_name + '.jpg')
+        images = os.listdir(training_path)
+        random.shuffle(images)
+        validation_count = int(len(images) * split_ratio)
 
-        if os.path.exists(mhd_file_path):
-            convert_raw_to_jpeg_with_metadata(raw_file_path, mhd_file_path, jpeg_file_path)
+        for i in range(validation_count):
+            src = os.path.join(training_path, images[i])
+            dest = os.path.join(validation_path, images[i])
+            os.rename(src, dest)
+
+# Paths
+source_base = 'C:/Users/sidth/Downloads/AD_Classification_data/Classification_data'
+dest_base = 'C:/Users/sidth/Downloads/AD_Classification_data/Classification_data_formatted'
+validation_base = 'C:/Users/sidth/Downloads/AD_Classification_data/Classification_data_formatted/Validation'
+
+# Process each .mhd file to .jpg
+process_directory(source_base, dest_base)
+
+# Split training data into training and validation sets
+split_data(dest_base, source_base, validation_base, split_ratio=0.1)
