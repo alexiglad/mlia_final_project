@@ -1,7 +1,6 @@
 import os
 import rawpy
 import PIL.Image
-import SimpleITK as sitk
 
 def convert_raw_to_jpeg_with_metadata(raw_file_path, mhd_file_path, jpeg_file_path):
     # # Read metadata from .mhd file
@@ -26,7 +25,7 @@ def convert_raw_to_jpeg_with_metadata(raw_file_path, mhd_file_path, jpeg_file_pa
     rgb_im.save(jpeg_file_path)
 
 # Directory containing your .raw and .mhd files
-directory = 'C:/Users/sidth/Downloads/AD_Classification_data/Classification_data/Testing/Diseased_2'
+directory = '/scratch/ssb3vk/MLIA/Classification_data/Training/Diseased'
 
 # Iterate over files in the directory
 for filename in os.listdir(directory):
