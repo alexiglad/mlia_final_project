@@ -25,3 +25,5 @@ singularity exec --env HF_HOME=$HF_HOME --env PYTHONPATH=/usr/local/lib/python3.
 --dist-bn reduce
 
 #dont worry about lines 2-14 they are just hparams for this specific project, replace them with the hparams you sent
+
+# based off: https://huggingface.co/docs/timm/training_script#training-script
