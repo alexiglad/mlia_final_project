@@ -58,6 +58,7 @@ try:
     has_wandb = True
 except ImportError:
     has_wandb = False
+    print("does not have wandb")
 
 try:
     from functorch.compile import memory_efficient_fusion
@@ -354,7 +355,8 @@ group.add_argument('--use-multi-epochs-loader', action='store_true', default=Fal
                    help='use the multi-epochs-loader to save time at the beginning of every epoch')
 group.add_argument('--log-wandb', action='store_true', default=False,
                    help='log training and validation metrics to wandb')
-
+group.add_argument('--wandb_name', type=str, default="baseline",
+                   help='log training and validation metrics to wandb')
 
 def _parse_args():
     # Do we have a config file to parse?
