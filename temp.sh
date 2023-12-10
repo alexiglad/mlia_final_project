@@ -1,11 +1,9 @@
-NUM_PROC=$1
-
-singularity exec --env HF_HOME=$HF_HOME --env PYTHONPATH=/usr/local/lib/python3.8/site-packages/ --nv /scratch/ssb3vk/MLIA/mlia_fp.sif torchrun --nproc_per_node=$NUM_PROC train.py \
-/scratch/ssb3vk/MLIA/AD_Classification_data/Classification_data_formatted \
+singularity exec --env HF_HOME=$HF_HOME --env PYTHONPATH=~/.local/lib/python3.8/site-packages:/usr/local/lib/python3.8/site-packages/ --nv /scratch/$(whoami)/containers/mlia_fp.sif torchrun --nproc_per_node 1 train.py \
+./Classification_data_formatted \
 --model mixnet_s \
 -b 32 \
 --sched step \
---epochs 450 \
+--epochs 50 \
 --decay-epochs 2.4 \
 --decay-rate .969 \
 --opt rmsproptf \
@@ -21,7 +19,8 @@ singularity exec --env HF_HOME=$HF_HOME --env PYTHONPATH=/usr/local/lib/python3.
 --remode pixel \
 --reprob 0.3 \
 --amp \
---lr 0.16 \
---dist-bn reduce
-
-#dont worry about lines 2-14 they are just hparams for this specific project, replace them with the hparams you sent
+--lr 0.003 \
+--dist-bn reduce \
+--wandb_name 'baseline' \
+--log-wandb
+#TODO manually set nproc_per_node value
