@@ -805,6 +805,8 @@ def _gen_mixnet_s(variant, channel_multiplier=1.0, pretrained=False, **kwargs):
     Ref impl: https://github.com/tensorflow/tpu/tree/master/models/official/mnasnet/mixnet
     Paper: https://arxiv.org/abs/1907.09595
     """
+    print("pretrained", pretrained)
+
     arch_def = [
         # stage 0, 112x112 in
         ['ds_r1_k3_s1_e1_c16'],  # relu
@@ -2201,6 +2203,7 @@ def tf_efficientnetv2_b3(pretrained=False, **kwargs) -> EfficientNet:
 def mixnet_s(pretrained=False, **kwargs) -> EfficientNet:
     """Creates a MixNet Small model.
     """
+    print("pretrained", pretrained)
     model = _gen_mixnet_s(
         'mixnet_s', channel_multiplier=1.0, pretrained=pretrained, **kwargs)
     return model
@@ -2250,6 +2253,7 @@ def tf_mixnet_s(pretrained=False, **kwargs) -> EfficientNet:
     """
     kwargs.setdefault('bn_eps', BN_EPS_TF_DEFAULT)
     kwargs.setdefault('pad_type', 'same')
+
     model = _gen_mixnet_s(
         'tf_mixnet_s', channel_multiplier=1.0, pretrained=pretrained, **kwargs)
     return model
