@@ -3,7 +3,7 @@ singularity exec --env HF_HOME=$HF_HOME --env PYTHONPATH=~/.local/lib/python3.8/
 --model mixnet_s \
 -b 32 \
 --sched step \
---epochs 50 \
+--epochs 200 \
 --decay-epochs 2.4 \
 --decay-rate .969 \
 --opt rmsproptf \
@@ -19,8 +19,9 @@ singularity exec --env HF_HOME=$HF_HOME --env PYTHONPATH=~/.local/lib/python3.8/
 --remode pixel \
 --reprob 0.3 \
 --amp \
---lr 0.03 \
+--lr 0.003 \
 --dist-bn reduce \
---wandb_name 'kernel_9_11_13' \
+--wandb_name '3.5.7' \
+--num_classes 2 \
 --log-wandb
 #TODO manually set nproc_per_node value

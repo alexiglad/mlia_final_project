@@ -38,6 +38,7 @@ def safe_model_name(model_name: str, remove_source: bool = True):
 def create_model(
         model_name: str,
         pretrained: bool = False,
+        kernel_combo: str = None,
         pretrained_cfg: Optional[Union[str, Dict[str, Any], PretrainedCfg]] = None,
         pretrained_cfg_overlay:  Optional[Dict[str, Any]] = None,
         checkpoint_path: str = '',
@@ -113,9 +114,11 @@ def create_model(
         raise RuntimeError('Unknown model (%s)' % model_name)
 
     create_fn = model_entrypoint(model_name)
+    # print("kernel_combo", kernel_combo)
     with set_layer_config(scriptable=scriptable, exportable=exportable, no_jit=no_jit):
         model = create_fn(
             pretrained=pretrained,
+            kernel_combo=kernel_combo,
             pretrained_cfg=pretrained_cfg,
             pretrained_cfg_overlay=pretrained_cfg_overlay,
             **kwargs,

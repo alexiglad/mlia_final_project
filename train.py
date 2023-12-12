@@ -355,6 +355,9 @@ group.add_argument('--use-multi-epochs-loader', action='store_true', default=Fal
                    help='use the multi-epochs-loader to save time at the beginning of every epoch')
 group.add_argument('--log-wandb', action='store_true', default=False,
                    help='log training and validation metrics to wandb')
+group.add_argument('--num_classes', type=int, default=2, metavar='N',
+                   help='number of classes')
+                   
 group.add_argument('--wandb_name', type=str, default="baseline",
                    help='log training and validation metrics to wandb')
 
@@ -421,10 +424,11 @@ def main():
         in_chans = args.in_chans
     elif args.input_size is not None:
         in_chans = args.input_size[0]
-
+    print("args.num_classes", args.num_classes)
     model = create_model(
         args.model,
         pretrained=args.pretrained,
+        kernel_combo=args.wandb_name,
         in_chans=in_chans,
         num_classes=args.num_classes,
         drop_rate=args.drop,
@@ -447,6 +451,7 @@ def main():
     if args.num_classes is None:
         assert hasattr(model, 'num_classes'), 'Model must have `num_classes` attr if not set on cmd line/config.'
         args.num_classes = model.num_classes  # FIXME handle model default vs config num_classes more elegantly
+        print("model.num_classes", model.num_classes)
 
     if args.grad_checkpointing:
         model.set_grad_checkpointing(enable=True)
@@ -712,11 +717,12 @@ def main():
         if args.experiment:
             exp_name = args.experiment
         else:
-            exp_name = '-'.join([
-                datetime.now().strftime("%Y%m%d-%H%M%S"),
-                safe_model_name(args.model),
-                str(data_config['input_size'][-1])
-            ])
+            exp_name = args.wandb_name
+            # exp_name = '-'.join([
+            #     datetime.now().strftime("%Y%m%d-%H%M%S"),
+            #     safe_model_name(args.model),
+            #     str(data_config['input_size'][-1])
+            # ])
         output_dir = utils.get_outdir(args.output if args.output else './output/train', exp_name)
         decreasing = True if eval_metric == 'loss' else False
         saver = utils.CheckpointSaver(
