@@ -19,8 +19,8 @@ singularity exec --env HF_HOME=$HF_HOME --env PYTHONPATH=~/.local/lib/python3.8/
 --remode pixel \
 --reprob 0.3 \
 --amp \
---lr 0.003 \
+--lr 0.03 \
 --dist-bn reduce \
---wandb_name 'baseline' \
+--wandb_name 'kernel_9_11_13' \
 --log-wandb
 #TODO manually set nproc_per_node value
