@@ -360,6 +360,8 @@ group.add_argument('--num_classes', type=int, default=2, metavar='N',
                    
 group.add_argument('--wandb_name', type=str, default="baseline",
                    help='log training and validation metrics to wandb')
+group.add_argument('--bce_loss', action='store_true', default=False)
+
 
 def _parse_args():
     # Do we have a config file to parse?
@@ -699,9 +701,16 @@ def main():
             train_loss_fn = SoftTargetCrossEntropy()
     elif args.smoothing:
         if args.bce_loss:
-            train_loss_fn = BinaryCrossEntropy(smoothing=args.smoothing, target_threshold=args.bce_target_thresh)
+            print("using bce")
+            train_loss_fn = BinaryCrossEntropy(smoothing=args.smoothing, pos_weight=torch.tensor(3))
         else:
-            train_loss_fn = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
+            print("here!")
+            weights = torch.tensor([1, 1], dtype=torch.float32)
+            print("weights", weights)
+            #TODO
+
+            train_loss_fn = nn.CrossEntropyLoss(weight=weights)
+            # train_loss_fn = LabelSmoothingCrossEntropy(smoothing=args.smoothing, class_weights = [1, 3])
     else:
         train_loss_fn = nn.CrossEntropyLoss()
     train_loss_fn = train_loss_fn.to(device=device)
@@ -748,6 +757,7 @@ def main():
                 "Metrics not being logged to wandb, try `pip install wandb`")
 
     # setup learning rate schedule and starting epoch
+    print("len(loader_train)", len(loader_train))
     updates_per_epoch = (len(loader_train) + args.grad_accum_steps - 1) // args.grad_accum_steps
     lr_scheduler, num_epochs = create_scheduler_v2(
         optimizer,
@@ -908,6 +918,15 @@ def train_one_epoch(
         def _forward():
             with amp_autocast():
                 output = model(input)
+                # print("output", output)
+                # print("target", target)
+
+                probabilities = torch.softmax(output, dim=1)
+
+                # Predicted classes
+                _, predicted_classes = torch.max(probabilities, dim=1)
+                # print("predicted classes", predicted_classes)
+                # print("loss_fn", loss_fn)
                 loss = loss_fn(output, target)
             if accum_steps > 1:
                 loss /= accum_steps
@@ -1026,6 +1045,8 @@ def validate(
     end = time.time()
     last_idx = len(loader) - 1
     with torch.no_grad():
+        current_manually_calculated_acc = 0
+        total_samples_pred = 0
         for batch_idx, (input, target) in enumerate(loader):
             last_batch = batch_idx == last_idx
             if not args.prefetcher:
@@ -1046,6 +1067,26 @@ def validate(
                     target = target[0:target.size(0):reduce_factor]
 
                 loss = loss_fn(output, target)
+            # print("target", target)
+
+            probabilities = torch.softmax(output, dim=1)
+
+            # Predicted classes
+            _, predicted_classes = torch.max(probabilities, dim=1)
+            # print("predicted classes", predicted_classes)
+            correct_predictions = (predicted_classes == target).sum()
+
+            # Calculate accuracy
+            total_predictions = target.size(0)  # Total number of predictions
+            accuracy = correct_predictions.float() / total_predictions
+
+
+            scaled_acc = current_manually_calculated_acc * total_samples_pred
+            current_manually_calculated_acc = (total_predictions * accuracy + scaled_acc) / (total_predictions + total_samples_pred)
+            # print("inner loop calculated accuracy:", accuracy.item())
+
+            total_samples_pred += total_predictions
+
             acc1, acc5 = utils.accuracy(output, target, topk=(1, 5))
 
             if args.distributed:
@@ -1073,6 +1114,8 @@ def validate(
                     f'Acc@1: {top1_m.val:>7.3f} ({top1_m.avg:>7.3f})  '
                     f'Acc@5: {top5_m.val:>7.3f} ({top5_m.avg:>7.3f})'
                 )
+        print("Manually calculated accuracy:", current_manually_calculated_acc.item())
+        
 
     metrics = OrderedDict([('loss', losses_m.avg), ('top1', top1_m.avg), ('top5', top5_m.avg)])
 

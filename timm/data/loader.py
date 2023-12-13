@@ -275,7 +275,7 @@ def create_loader(
     loader_class = torch.utils.data.DataLoader
     if use_multi_epochs_loader:
         loader_class = MultiEpochsDataLoader
-
+    print("is shuffling?", not isinstance(dataset, torch.utils.data.IterableDataset) and sampler is None and is_training)
     loader_args = dict(
         batch_size=batch_size,
         shuffle=not isinstance(dataset, torch.utils.data.IterableDataset) and sampler is None and is_training,
