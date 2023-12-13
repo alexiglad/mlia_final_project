@@ -18,7 +18,7 @@ singularity exec --env HF_HOME=$HF_HOME --env PYTHONPATH=~/.local/lib/python3.8/
 --amp \
 --lr 0.03 \
 --dist-bn reduce \
---wandb_name '3.5.7' \
+--wandb_name '17.19.21' \
 --num_classes 2 \
 --smoothing 0.1 \
 --log-wandb
